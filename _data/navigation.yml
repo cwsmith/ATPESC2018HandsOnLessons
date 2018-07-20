@@ -11,7 +11,7 @@
   url: "/lessons/"
   side: left
   dropdown:
-  - title: "Hand Coded Heat"
+  - title: "FOO Hand Coded Heat"
     url: "/lessons/hand_coded_heat/"
   - title: "Meshing and Discretization (MFEM)"
     url: "/lessons/mfem_convergence/"
@@ -25,6 +25,8 @@
     url: "/lessons/adjoint/"
   - title: "Numerical Optimization"
     url: "/lessons/obstacle_tao"
+  - title: "MFEM+PUMI Adaptive Workflow"
+    url: "/lessons/pumi_evening_handson/"
 
 - title: Packages
   url: "https://fastmath-scidac.org/software-catalog.html"
