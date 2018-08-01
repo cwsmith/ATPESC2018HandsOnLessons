@@ -22,8 +22,23 @@ example
 % cp _lessons/lesson_template/lesson.md foobar/.
 ```
 
+## Setup
 
+Ensure that your environment is only using the `@default` packages by running the following commands:
 
+```
+cp ~/.soft ~/.soft_bk
+echo '@default' > ~/.soft
+resoft
+mv ~/.soft_bk ~/.soft
+```
+
+Add mvapich2 and gcc7 to your environment
+
+```
+soft add +mvapich2-2.3rc1
+soft add +gcc-7.1.0
+```
 
 ## At a Glance
 
