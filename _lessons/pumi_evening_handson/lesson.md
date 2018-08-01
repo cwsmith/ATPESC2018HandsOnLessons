@@ -10,17 +10,7 @@ header:
  image_fullwidth: "xsdk_logo_wide.png"
 ---
 
-Use this template as an example of both the high-level layout of a lesson as well as
-how to include and use various features such as equations, QandA's, images, gif
-animations and/or videos. 
-
-Start by copying this lesson template to a new sub-directory under `_lessons`. For
-example
-
-```shell
-% mkdir _lessons/foobar
-% cp _lessons/lesson_template/lesson.md foobar/.
-```
+The MFEM+PUMI examples are prepared for execution on Cooley at ALCF.  Except where noted, all commands shown below should be executed in a terminal logged into Cooley.  In each new terminal first prepare your environment by running the commands listed in the Setup section.
 
 ## Setup
 
