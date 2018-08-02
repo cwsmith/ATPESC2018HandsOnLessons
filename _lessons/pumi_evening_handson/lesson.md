@@ -165,8 +165,8 @@ cd ~/mfem-pumi-lesson/meshGeneration
 mpirun -np 4 ./generate --native-model=upright.x_t upright.smd 5kg1
 mpirun -np 4 ./render upright.x_t 5kg1 5kg1_initial/
 # generate the mesh on the defeatured model and create paraview vtu files
-mpirun -np 4 ./generate --native-model=upright_defeatured.x_t upright_defeatured.smd 5kg1
-mpirun -np 4 ./render upright_defeatured.x_t 5kg1 5kg1_defeatured/
+mpirun -np 4 ./generate --native-model=upright_defeatured_nat.x_t upright_defeatured.smd 5kg1
+mpirun -np 4 ./render upright_defeatured_nat.x_t 5kg1 5kg1_defeatured/
 ```
 
 ![initial model](mfem-superlu0000.png){:width="500"}
