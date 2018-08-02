@@ -10,12 +10,35 @@ header:
  image_fullwidth: "xsdk_logo_wide.png"
 ---
 
-The MFEM+PUMI examples are prepared for execution on Cooley at ALCF.  Except where noted, all commands shown below should be executed in a terminal logged into Cooley.  In each new terminal first prepare your environment by running the commands listed in the Setup section.
+## My Questions
 
-## Setup
+- how do i create links from text to sections or figures?
 
-Ensure that your environment is only using the `@default` packages by running the following commands:
+## At A Glance
 
+|Questions|Objectives|Key Points|
+| How can I define a simulation on a complex geometric model?        | Demonstrate model defeaturing and mesh generation pre-processing tools           | Complex models require robust pre-processing tools!                                                                                                                                   | 
+|                                                                    | Demonstrate the power of geometric model classification                          | Automated simulation tools designed for scientists and engineers working with real CAD models problem definition information must be specified on the geometric model - not the mesh. | 
+| How can I efficiently execute simulations with transient behavior? | Demonstrate an adaptive MFEM+PUMI linear elastic analysis with large deformation | Adaptation is critical to automated, robust, and efficient simulation of simulations with transient behavior in which a static mesh defined a-priori will fail.                       | 
+
+Before you begin, first [Open the Answers Form](https://goo.gl/forms/HmuX6HrT0Yfoz7ny2){:target="\_blank"}
+in a separate browser tab/window.
+*Answer Question 0* once you have it open.
+We will be entering responses to questions here that are placed throughout the
+lesson.
+
+The MFEM+PUMI examples are prepared for execution on Cooley at ALCF.
+Except where noted, all commands shown below should be executed in a terminal
+logged into Cooley.
+In each new terminal first prepare your environment by running the commands
+listed in the following section.
+
+Note, each step can be performed independently; we encourage you to go
+through them in order.
+
+## To begin this lesson
+
+- Ensure that your environment is only using the `@default` packages by running the following commands:
 ```
 cp ~/.soft ~/.soft_bk
 echo '@default' > ~/.soft
@@ -23,167 +46,176 @@ resoft
 mv ~/.soft_bk ~/.soft
 ```
 
-Add mvapich2 and gcc7 to your environment
-
+- Add mvapich2 to your environment
 ```
 soft add +mvapich2-2.3rc1
-soft add +gcc-7.1.0
 ```
 
-## At a Glance
-
-* **Questions** are the those things we want learners to know the answers to by the end of the lesson.
-We don't have to list all possible questions here...only the two or three _most_ important.
-* **Objectives** are those things we want learners to actually do or observe during the lesson. Again,
-only list here the ones that are _most_ important.
-* **Key Points** are those things we want learners to take-away from the lesson.
-
-A lesson can have any number of these but its best to keep the number small and its ok to have only
-one of each.
-
-|Questions|Objectives|Key Points|
-|Key question #1?|Objective #1|Key point #1|
-|Key question #2?|Objective #2|Key point #2|
-|Key question #3?|Objective #3|Key point #3|
-
-Example...
-
-|Questions|Objectives|Key Points|
-|1. What is a numerical algorithm?|Understand performance metrics|HPC numerical software involves complex<br>algorithms and data structures|
-|2. What is discretization?|Understand algorithmic trade-offs|Robust software requires significant<br>software quality engineering (SQE).|
-|What is stability?|Understand value of software packages|Numerical packages simplify application development,<br>offer efficient & scalable performance,<br>and enable app-specific customization.|
-
-## The Problem Being Solved
-
-Describe the problem(s) that will be solved in this lesson.
-If possible, include a picture or graphic here describing the physical problem setup. If the application
-or tool being used can deal with a variety of input physical problems, its fine to mention
-that but here just include a cool or motivating picture of the problem they will be running in the _runs_
-below. Maybe include the equation(s) being solved as well.
-
-Including [LaTeX](https://www.latex-project.org)
-equations is easy. Below are examples of block-displayed equations. You can also
-
+- Copy the example directory to your home directory
 ```
-$$\frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2}$$
+rsync -aP {{site.handson_install_root}}/mfem-pumi-lesson ~/.
 ```
 
-If you want to refer to the equation in text, add a label like so...
-
+- Enter the lesson directory
 ```
-$$\label{foo} \frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2}$$
-```
-
-Now, you can refer to the a labeled equation like so, using `see \ref{foo}`.
-
-Equations are automatically numbered and references are updated when the pages are
-regenerated.
-
-## The Example Source Code
-
-Describe the application, its command-line arguments, have a link to view the actual source code
-or, if you prefer, include snipits of the source code here in a code-highlighted box as below
-
-```c++
-Geometry::~Geometry()
-{
-   for (int i = 0; i < NumGeom; i++)
-   {
-      delete PerfGeomToGeomJac[i];
-      delete GeomVert[i];
-   }
-}
+cd ~/mfem-pumi-lesson
 ```
 
-## Running the Example
 
-### Run 1 (Problem Name)
+## Geometric Model Defeaturing
 
-Give the command-line to run the example
+Geometric models are often provided by design engineers and include many
+features that are not required for simulation.
+Figure 1 depicts the geometric model of a tokamak fusion reactor that has
+multiple bolts, nuts, and brackets that have no influence on the frequency
+analysis (FIXME).  These features are removed from the Parasolid CAD model
+by the Simmetrix SimModSuite tools by calling Parasolid kernel APIs to delete
+the faces and 'heal' the remaining hole via extensions of the bounding edges and
+faces.  Figure 2 depicts the defeatured tokamak model. In a model with this
+level of complexity that engineers and scientists running the simulation often
+must coordinate to create the `as-simulated' model.
 
-#### Expected Behavior/Output
+![Figure 1](mfem-superlu0000.png){:width="500"}
+*Figure 1. Initial tokamak geometric model*
 
-Include here what learner should expect to happen
+![Figure 2](mfem-superlu0000.png){:width="500"}
+*Figure 2. Defeatured tokamak geometric model*
 
-* How long might it take to run
-* How long might they have to wait for resources before it can run
-* What should they seen on their terminal
-
-#### Examining Results
-
-Include here examples of either plots or data you expect learners to observe.
-
-![An Image](basic0000.png)
-
-Or, if you need to control the size, or have multiple images next to each other
-use a Markdown table and raw html...
-
-|<img src="basic0000.png" width="200">|<img src="basic0000.png" width="400">|
-
-**Note:** You can create [gif animations](https://www.tjhsst.edu/~dhyatt/supercomp/n401a.html)
-with ImageMagick tool available on most systems as `convert` command as in...
+For this hands-on we will perform a few simple defeaturing operations on the RPI
+Formula Hybrid suspension upright shown in Figure 3.
+The ids of the geometric model faces of interest are labelled.
+Faces ## ## ## are small faces created during the design that are not relevant
+to the simulation and can be removed.
+To remove those faces run the following commands.
 
 ```
-convert -delay 20 -loop 0 image*.<ext> animation.gif
+qsub -I -n 1 -t 30 -A ATPESC2018 -q training
+cd ~/mfem-pumi-lesson/defeature
+./defeature upright.x_t ## ## ## upright_defeatured.x_t
 ```
 
-![Gif Animations](animated_basic_heat.gif)
+![labelled upright](mfem-superlu0000.png){:width="500"}
+*Figure 3. RPI Formula Hybrid suspension upright with faces labelled*
 
-Alternatively, you can upload videos to YouTube and embed them here
+In the Mesh Generation step we will generate and compare meshes of the initial
+and defeatured geometric models.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/bsSFYrDXK0k" frameborder="0" allowfullscreen></iframe>
+## Problem Definition
 
-#### Question and Answer Boxes
+We will define a tensile loading on the upright by applying a uniform force on
+one end (min Z face) and fixing the displacements on the other end (max Z face).
+All other geometric model faces will be unconstrained.  No body forces are
+applied.
 
-We use a custom [Liquid](https://shopify.github.io/liquid/) include macro to handle
-question and answer boxes. To use it...
+Using geometric classification of the mesh we can define the boundary conditions
+on the geometric model without having any knowledge/consideration of the mesh.
+A very simple text based interface was defined for this demonstration example to
+define the two boundary conditions.  To specify the geometric model faces with
+the load applied we add one line with `Load` followed by another line with the
+number of faces with that load applied.  The geometric model face ids, one per
+line, are then listed. Using the same convention we define the fixed faces using
+the string `Dirichlet`, the number of listed faces, then the list of face ids.
+The boundary condition specification for this example is listed below.
+Using the geometric model classification mechanism supports creation of more
+feature-rich interfaces (command line, file, GUI).
 
-{% raw %}
-```liquid
-{% include qanda question='The question to ask' answer='The _answer_ you want to provide' %}
 ```
-{% endraw %}
+$ cat upright.def
+Dirichlet
+1
+43
 
-You may include standard [GitHub Markdown](https://guides.github.com/features/mastering-markdown/)
-styling within the quoted text to both the _question_ and _answer_ parameters of the Liquid
-include macro.
+Load
+1
+344
+```
 
-which then renders as...
-{% include qanda question='The question to ask' answer='The answer you want to provide' %}
+*Answer Question 1*
 
----
+## Mesh Generation
 
-### Run 2 (Problem Name)
+Now that we have prepared the model and defined the boundary conditions we can
+proceed with mesh generation using the Simmetrix SimModSuite library APIs.
+The mesh generation procedures are driven by size controls (e.g., the absolute
+length of mesh edges) defined by the user on geometric model entities or defined
+within geometric primatives that intersect the model (e.g., cubes, spheres,
+cylinders, etc.).
+The mesh generator is automated, which in the domain of mesh generation means
+that it will always produce a valid mesh while doing its best to respect the
+user specified controls.
+Note, the features of the geometric model highly dictate what mesh sizes are
+possible.
+For example, in a thin cross-section isotropic  mesh elements (those with equal
+lengthed edges) cannot be larger than the cross-section thickness.
+If the user requests anisotropic, and/or higher order (curved), mesh elements
+than that thickness constraint would change.
 
-#### Expected Behavior/Output
+Once the mesh is generated we convert it, in-memory (i.e., using PUMI and
+SimModSuite APIs), to a PUMI mesh and then write the PUMI mesh to file.
 
-#### Examining Results
+*Answer Question 2*
 
-Include here examples of either plots or data you expect learners to observe.
+```
+qsub -I -n 1 -t 30 -A ATPESC2018 -q training
+cd ~/mfem-pumi-lesson/meshGeneration
+# generate the mesh on the initial geometric model and create paraview vtu files
+mpirun -np 4 ./generate --native-model=upright.x_t upright.smd 5kg1
+mpirun -np 4 ./render upright.x_t 5kg1 5kg1_initial/
+# generate the mesh on the defeatured model and create paraview vtu files
+mpirun -np 4 ./generate --native-model=upright_defeatured.x_t upright_defeatured.smd 5kg1
+mpirun -np 4 ./render upright_defeatured.x_t 5kg1 5kg1_defeatured/
+```
 
-#### Questions
+![initial model](mfem-superlu0000.png){:width="500"}
+*Figure 4. Mesh of initial upright model*
 
-{% include qanda question='Question #1' answer='The answer to Question #1' %}
+![defeatured model](mfem-superlu0000.png){:width="500"}
+*Figure 5. Mesh of defeatured upright model*
 
-{% include qanda question='Question #2' answer='The answer to Question #2' %}
+### Optional - Visualize the Initial Meshes
+Download the pvtu files from [Here - FIXME](https://goo.gl/forms/HmuX6HrT0Yfoz7ny2), or
+use a file transfer utility (e.g., `scp`, `rsync`, `putty`, etc.) to copy them to your local machine.
 
----
+## Partitioning
 
-### Run 3
+Efficient parallel execution requires equally distributing the units of work among the
+processing resources while keeping communication costs low.
+The multi-level graph and recursive sectioning geometric methods are among the
+most commonly available and used methods for partitioning unstructured meshes.
+In this lesson we will exercise the multi-level graph partitioner provided by
+the Zoltan interface and implemented by ParMETIS.  We will then run recursive
+coordinate bisection (RCB) and recursive inertial bisection (RIB) to produce
+meshes of with the same part count (number of sub-domains), and compare the
+results.  All three partitioners are targeting an imbalance of 5%; defined as
+the max element count on any part divided by the average element count across
+all parts.
 
-#### Expected Behavior/Output
+```
+qsub -I -n 1 -t 30 -A ATPESC2018 -q training
+cd ~/mfem-pumi-lesson/partition
+mpirun -np 4 ./ptnParma upright_defeatured.x_t 5k1g_.smb 5k1g_p4_parmetis/ 4 parmetis kway 0  # rib
+mpirun -np 4 ./ptnParma upright_defeatured.x_t 5k1g_.smb 5k1g_p4_rcb/ 4 rcb ptn 0  # rcb
+mpirun -np 4 ./ptnParma upright_defeatured.x_t 5k1g_.smb 5k1g_p4_rib/ 4 rib ptn 0  # rib
+```
 
-#### Examining Results
+Examine the output and Answer Question 3.
 
-Include here examples of either plots or data you expect learners to observe.
+Examine Figures 6-8 below and Answer Question 4.
 
-#### Questions
+![rib](mfem-superlu0000.png){:width="500"}
+*Figure 6. RIB partition*
+![rcb](mfem-superlu0000.png){:width="500"}
+*Figure 7. RCB partition*
+![multi-level](mfem-superlu0000.png){:width="500"}
+*Figure 8. ParMETIS multi-level graph partition*
 
-{% include qanda question='Question #3' answer='The answer to Question #3' %}
+### Optional - Visualize the Partitioned Meshes
+Download the pvtu files from [Here]( https://goo.gl/forms/HmuX6HrT0Yfoz7ny2), or
+use a file transfer utility (e.g., `scp`, `rsync`, `putty`, etc.) to copy them to your local machine.
 
-{% include qanda question='Question #4' answer='The answer to Question #4' %}
+## Adaptive Simulation
 
----
+
 
 ## Out-Brief
 
