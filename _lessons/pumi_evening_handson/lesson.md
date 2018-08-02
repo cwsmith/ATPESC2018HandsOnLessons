@@ -232,7 +232,17 @@ to your local machine.
 
 ## Adaptive Simulation
 
+```
+qsub -I -n 1 -t 30 -A ATPESC2018 -q training
+cd ~/mfem-pumi-lesson/analysis
+mpirun -np 4 ./pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 5k1g_p4_parmetis/
+mpirun -np 4 ./pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 5k1g_p4_rcb/
+mpirun -np 4 ./pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 5k1g_p4_rib/
+```
 
+**Answer Question 4**
+
+**Answer Question 5**
 
 ## Out-Brief
 
