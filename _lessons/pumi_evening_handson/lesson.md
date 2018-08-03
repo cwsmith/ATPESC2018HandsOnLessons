@@ -1,7 +1,7 @@
 ---
 layout: page-fullwidth
 title: "Adaptive MFEM+PUMI Workflow"
-subheadline: "Conformal Unstructured Mesh Adaptation for Advancing Shock"
+subheadline: "Conformal Unstructured Mesh Adaptation for Linear Elastic Tensial Loading"
 teaser: "MFEM with PUMI Conformal Unstructured Mesh Adaptation"
 permalink: "lessons/pumi_evening_handson/"
 use_math: true
@@ -13,6 +13,7 @@ header:
 ## My Questions
 
 - how do i create links from text to sections or figures?
+- how do i add emoji?  Tzanio had a star emoji https://www.webpagefx.com/tools/emoji-cheat-sheet/
 
 ## At A Glance
 
@@ -68,20 +69,20 @@ cd ~/mfem-pumi-lesson
 
 Geometric models are often provided by design engineers and include many
 features that are not required for simulation.
-Figure 1 depicts the geometric model of a tokamak fusion reactor that has
-multiple bolts, nuts, and brackets that have no influence on the frequency
-analysis (FIXME).  These features are removed from the Parasolid CAD model
-by the Simmetrix SimModSuite tools by calling Parasolid kernel APIs to delete
-the faces and 'heal' the remaining hole via extensions of the bounding edges and
-faces.  Figure 2 depicts the defeatured tokamak model. In a model with this
-level of complexity that engineers and scientists running the simulation often
-must coordinate to create the `as-simulated' model.
+The left side of Figure 1 depicts the geometric model of a Tokamak fusion
+reactor that has multiple bolts, nuts, and brackets that have no influence on
+the frequency analysis.
+These features are removed from the Parasolid CAD model by the Simmetrix
+SimModSuite tools by calling Parasolid kernel APIs to delete the faces and
+'heal' the remaining hole via extensions of the bounding edges and faces.
+The right side of Figure 1 depicts the defeatured Tokamak model.
+In a model with this level of complexity that engineers and scientists running
+the simulation often must coordinate to create the `as-simulated' model.
 
-![Figure 1](mfem-superlu0000.png){:width="500"}
-*Figure 1. Initial tokamak geometric model*
+[<img src="antenna.png" width="400">](antenna.png)
+[<img src="antenna_defeatured.png" width="400">](antenna_defeatured.png)
 
-![Figure 2](mfem-superlu0000.png){:width="500"}
-*Figure 2. Defeatured tokamak geometric model*
+*Figure 1. Initial (left) and defeatured (right) Tokamak antenna geometric model*
 
 For this hands-on we will perform a few simple defeaturing operations on the RPI
 Formula Hybrid suspension upright shown in Figure 3.
@@ -93,14 +94,24 @@ To remove those faces run the following commands.
 ```
 qsub -I -n 1 -t 30 -A ATPESC2018 -q training
 cd ~/mfem-pumi-lesson/defeature
-./defeature upright.x_t ## ## ## upright_defeatured.x_t
 ```
 
-![labelled upright](mfem-superlu0000.png){:width="500"}
-*Figure 3. RPI Formula Hybrid suspension upright with faces labelled*
+[<img src="figs/upright/all_zmin.png" width="400">](figs/upright/all_zmin.png)
+[<img src="figs/upright/all_zmax.png" width="400">](figs/upright/all_zmax.png)
+
+*Figure 3. RPI Formula Hybrid suspension upright*
+
+[<img src="figs/upright_defeatured/all_zmin.png" width="400">](figs/upright_defeatured/all_zmin.png)
+[<img src="figs/upright_defeatured/all_zmax.png" width="400">](figs/upright_defeatured/all_zmax.png)
+
+*Figure 4. RPI Formula Hybrid suspension upright with small faces removed*
 
 In the Mesh Generation step we will generate and compare meshes of the initial
 and defeatured geometric models.
+
+
+### Optional - Run SimModeler to defeature the upright.
+Launch the VNC. Run SimModeler. FIXME
 
 ## Problem Definition
 
@@ -162,17 +173,21 @@ SimModSuite APIs), to a PUMI mesh and then write the PUMI mesh to file.
 qsub -I -n 1 -t 30 -A ATPESC2018 -q training
 cd ~/mfem-pumi-lesson/meshGeneration
 # generate the mesh on the initial geometric model and create paraview vtu files
-mpirun -np 4 ./generate --native-model=upright.x_t upright.smd 5kg1
-mpirun -np 4 ./render upright.x_t 5kg1 5kg1_initial/
+./generate --native-model=upright.x_t upright.smd 5kg1
+./render upright.x_t 5kg1/ 5kg1_initial_vtu
 # generate the mesh on the defeatured model and create paraview vtu files
-mpirun -np 4 ./generate --native-model=upright_defeatured_nat.x_t upright_defeatured.smd 5kg1
-mpirun -np 4 ./render upright_defeatured_nat.x_t 5kg1 5kg1_defeatured/
+./generate upright_defeatured_geomsim.smd 5kg1
+./render upright_defeatured_geomsim.smd 5kg1/ 5kg1_defeatured_vtu
 ```
 
-![initial model](mfem-superlu0000.png){:width="500"}
+[<img src="figs/upright/5kg1_all_zmax.png" width="400">](figs/upright/5kg1_all_zmax.png)
+[<img src="figs/upright/5kg1_all_zmin.png" width="400">](figs/upright/5kg1_all_zmin.png)
+
 *Figure 4. Mesh of initial upright model*
 
-![defeatured model](mfem-superlu0000.png){:width="500"}
+[<img src="figs/upright_defeatured/5kg1_all_zmax.png" width="400">](figs/upright_defeatured/5kg1_all_zmax.png)
+[<img src="figs/upright_defeatured/5kg1_all_zmin.png" width="400">](figs/upright_defeatured/5kg1_all_zmin.png)
+
 *Figure 5. Mesh of defeatured upright model*
 
 ### Optional - Visualize the Initial Meshes
@@ -187,19 +202,19 @@ The multi-level graph and recursive sectioning geometric methods are among the
 most commonly available and used methods for partitioning unstructured meshes.
 In this lesson we will exercise the multi-level graph partitioner (refered to as
 'graph' below) provided by the Zoltan interface and implemented by ParMETIS.
-We will then run recursive coordinate bisection ('RCB') and recursive inertial
-bisection ('RIB') to produce meshes of with the same part count (number of
-sub-domains), and compare the results
-All three partitioners are targeting an imbalance of 5%; defined as
-the max element count on any part divided by the average element count across
-all parts.
+We will then run recursive inertial bisection ('RIB') to produce meshes with
+the same part count (number of sub-domains), and compare the results.
+Both partitioners are targeting an imbalance of 5%; defined as the max element
+count on any part divided by the average element count across all parts.
 
 ```
 qsub -I -n 1 -t 30 -A ATPESC2018 -q training
 cd ~/mfem-pumi-lesson/partition
-mpirun -np 4 ./ptnParma upright_defeatured.x_t 5k1g_.smb 5k1g_p4_parmetis/ 4 parmetis kway 0  # graph
-mpirun -np 4 ./ptnParma upright_defeatured.x_t 5k1g_.smb 5k1g_p4_rcb/ 4 rcb ptn 0  # RCB
-mpirun -np 4 ./ptnParma upright_defeatured.x_t 5k1g_.smb 5k1g_p4_rib/ 4 rib ptn 0  # RIB
+mpirun -np 4 ./ptnParma upright_defeatured_geomsim.smd 5kg1_defeatured/ 5kg1_p4_parmetis/ 4 parmetis kway 0  &> graph.out
+mpirun -np 4 ./ptnParma upright_defeatured_geomsim.smd 5kg1_defeatured/ 5kg1_p4_rib/ 4 rib ptn 0 &> rib.out
+#render the partitions
+mpirun -np 4 ./render upright_defeatured_geomsim.smd 5kg1_p4_parmetis/ 5kg1_p4_parmetis_vtu/
+mpirun -np 4 ./render upright_defeatured_geomsim.smd 5kg1_p4_rib/ 5kg1_p4_rib_vtu/
 ```
 
 The entity imbalance information is listed on the lines containing `entity
@@ -215,15 +230,11 @@ larger relative to another partition then that partition has more replicated
 entities.
 
 Given the values of the imbalance and shared entity count for each partition
-(RIB, RCB, graph) above and Figures 6-8 below, **Answer Question 3**.
+(RIB, graph) above, the content of the `[graph|rib].out` files, and
+Figures 6-7 below, **Answer Question 3**.
 
-![rib](mfem-superlu0000.
-png){:width="500"}
 *Figure 6. RIB partition*
-![rcb](mfem-superlu0000.png){:width="500"}
-*Figure 7. RCB partition*
-![multi-level](mfem-superlu0000.png){:width="500"}
-*Figure 8. ParMETIS multi-level graph partition*
+*Figure 7. ParMETIS multi-level graph partition*
 
 ### Optional - Visualize the Partitioned Meshes
 Download the `*vtu` files from [Here]( https://goo.gl/forms/HmuX6HrT0Yfoz7ny2), or
