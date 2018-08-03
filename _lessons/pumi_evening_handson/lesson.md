@@ -243,6 +243,12 @@ to your local machine.
 
 ## Adaptive Simulation
 
+Describe physics
+
+Describe code
+
+Describe adaptive strategy
+
 ```
 qsub -I -n 1 -t 30 -A ATPESC2018 -q training
 cd ~/mfem-pumi-lesson/analysis
