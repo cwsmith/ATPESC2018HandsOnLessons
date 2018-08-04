@@ -316,8 +316,8 @@ mpirun -np 4 ./pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.d
 
 [<img src="figs/uprightMesh/initial.png" width="400">](figs/uprightMesh/initial.png)
 [<img src="figs/uprightMesh/final.png" width="400">](figs/uprightMesh/final.png)
-[<img src="figs/uprightMesh/initial.png" width="400">](figs/uprightMesh/initial.png)
-[<img src="figs/uprightMesh/final.png" width="400">](figs/uprightMesh/final.png)
+[<img src="figs/uprightMesh/initial_displacement.png" width="400">](figs/uprightMesh/initial_displacement.png)
+[<img src="figs/uprightMesh/final_displacement.png" width="400">](figs/uprightMesh/final_displacement.png)
 
 *Figure 6. Initial (left) and final (right) mesh (top) and displacement field
 (bottom).*
