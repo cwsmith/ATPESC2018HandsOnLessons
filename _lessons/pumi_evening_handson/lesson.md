@@ -15,16 +15,24 @@ header:
 - how do i create links from text to sections or figures?
 - how do i add emoji?  Tzanio had a star emoji https://www.webpagefx.com/tools/emoji-cheat-sheet/
 
+## Todo
+- replace header - 1400x1600
+- setup.sh instead of soft manipulation
+- add zoomed upright image of double edge/small face
+- add Q/A forms - 'grep qanda' in lessons
+- download vtus from lesson github repo - copy/paste 'raw' link
+- collapseable Prob Def section? short prob def intro section?
+- mention relative size control used for mesh generation
+
 ## At A Glance
 
-|Questions|Objectives|Key Points|
-| How can I define a simulation on a complex geometric model?        | Demonstrate model defeaturing and mesh generation pre-processing tools           | Complex models require robust pre-processing tools!                                                                                                                                   | 
-|                                                                    | Demonstrate the power of geometric model classification                          | Automated simulation tools designed for scientists and engineers working with real CAD models problem definition information must be specified on the geometric model - not the mesh. | 
-| How can I efficiently execute simulations with transient behavior? | Demonstrate an adaptive MFEM+PUMI linear elastic analysis with large deformation | Adaptation is critical to automated, robust, and efficient simulation of simulations with transient behavior in which a static mesh defined a-priori will fail.                       | 
+| Questions                                                   | Objectives                                                                       | Key Points                                                                                                                                                                            | 
+| How can I define a simulation on a complex geometric model? | Demonstrate model defeaturing and mesh generation pre-processing tools           | Complex models require robust pre-processing tools!                                                                                                                                   | 
+|                                                             | Demonstrate the power of geometric model classification                          | Automated simulation tools designed for scientists and engineers working with real CAD models problem definition information must be specified on the geometric model - not the mesh. | 
+| How can I reliably and efficiently execute simulations?     | Demonstrate an adaptive MFEM+PUMI linear elastic analysis with large deformation | Adaptation is critical to automated, robust, and efficient simulation of simulations with transient behavior in which a static mesh defined a-priori will fail.                       | 
 
 Before you begin, first [Open the Answers Form](https://goo.gl/forms/HmuX6HrT0Yfoz7ny2){:target="\_blank"}
 in a separate browser tab/window.
-**Answer Question 0** once you have it open.
 We will be entering responses to questions here that are placed throughout the
 lesson.
 
@@ -84,17 +92,9 @@ the simulation often must coordinate to create the `as-simulated' model.
 
 *Figure 1. Initial (left) and defeatured (right) Tokamak antenna geometric model*
 
-For this hands-on we will perform a few simple defeaturing operations on the RPI
-Formula Hybrid suspension upright shown in Figure 3.
-The ids of the geometric model faces of interest are labelled.
-Faces ## ## ## are small faces created during the design that are not relevant
-to the simulation and can be removed.
-To remove those faces run the following commands.
-
-```
-qsub -I -n 1 -t 30 -A ATPESC2018 -q training
-cd ~/mfem-pumi-lesson/defeature
-```
+For this hands-on we removed a few small faces on the RPI Formula Hybrid
+suspension upright shown in Figure 3 to illustrate a few key characteristics of
+the mesh generation procedures.
 
 [<img src="figs/upright/all_zmin.png" width="400">](figs/upright/all_zmin.png)
 [<img src="figs/upright/all_zmax.png" width="400">](figs/upright/all_zmax.png)
@@ -122,6 +122,10 @@ applied.
 
 Using geometric classification of the mesh we can define the boundary conditions
 on the geometric model without having any knowledge/consideration of the mesh.
+Geometric classification defines the equal, or greater, order association of
+mesh entities to geometric model entities.
+For example, a mesh face can only be classified on a geometric model face or
+geometric model region, a mesh edge on geometric edges, faces and regions, 
 A very simple text based interface was defined for this demonstration example to
 define the two boundary conditions.  To specify the geometric model faces with
 the load applied we add one line with `Load` followed by another line with the
@@ -131,6 +135,8 @@ the string `Dirichlet`, the number of listed faces, then the list of face ids.
 The boundary condition specification for this example is listed below.
 Using the geometric model classification mechanism supports creation of more
 feature-rich interfaces (command line, file, GUI).
+
+Geometric classification 
 
 ```
 $ cat upright.def
@@ -194,6 +200,14 @@ cd ~/mfem-pumi-lesson/meshGeneration
 Download the `.*vtu` files from [Here - FIXME](https://goo.gl/forms/HmuX6HrT0Yfoz7ny2), or
 use a file transfer utility (e.g., `scp`, `rsync`, `putty`, etc.) to copy them to your local machine.
 
+---
+
+This concludes the day time hands-on.
+In the evening you'll have an opportunity to repeat these steps and follow two
+additional steps before running the adaptive analysis.
+
+---
+
 ## Partitioning
 
 Efficient parallel execution requires equally distributing the units of work among the
@@ -202,19 +216,24 @@ The multi-level graph and recursive sectioning geometric methods are among the
 most commonly available and used methods for partitioning unstructured meshes.
 In this lesson we will exercise the multi-level graph partitioner (refered to as
 'graph' below) provided by the Zoltan interface and implemented by ParMETIS.
-We will then run recursive inertial bisection ('RIB') to produce meshes with
-the same part count (number of sub-domains), and compare the results.
-Both partitioners are targeting an imbalance of 5%; defined as the max element
-count on any part divided by the average element count across all parts.
+We will then run recursive coordinate bisection ('RCB') and recursive inertial
+bisection ('RIB') to produce meshes of with the same part count (number of
+sub-domains), and compare the results.
+All three partitioners are targeting an imbalance of 5%; defined as
+the max element count on any part divided by the average element count across
+all parts.
 
 ```
 qsub -I -n 1 -t 30 -A ATPESC2018 -q training
 cd ~/mfem-pumi-lesson/partition
-mpirun -np 4 ./ptnParma upright_defeatured_geomsim.smd 5kg1_defeatured/ 5kg1_p4_parmetis/ 4 parmetis kway 0  &> graph.out
-mpirun -np 4 ./ptnParma upright_defeatured_geomsim.smd 5kg1_defeatured/ 5kg1_p4_rib/ 4 rib ptn 0 &> rib.out
-#render the partitions
-mpirun -np 4 ./render upright_defeatured_geomsim.smd 5kg1_p4_parmetis/ 5kg1_p4_parmetis_vtu/
-mpirun -np 4 ./render upright_defeatured_geomsim.smd 5kg1_p4_rib/ 5kg1_p4_rib_vtu/
+runParma=0
+isLocal=0
+render=1
+mdl=upright_defeatured_geomsim.smd
+mesh=5kg1_defeatured/
+mpirun -np 4 ./ptnParma $mdl $mesh 5kg1_p4_parmetis/ 4 pmetis kway $isLocal $runParma $render &> graph.out
+mpirun -np 4 ./ptnParma $mdl $mesh 5kg1_p4_rcb/ 4 rcb ptn $isLocal $runParma $render &> rcb.out
+mpirun -np 4 ./ptnParma $mdl $mesh 5kg1_p4_rib/ 4 rib ptn $isLocal $runParma $render &> rib.out
 ```
 
 The entity imbalance information is listed on the lines containing `entity
@@ -230,11 +249,18 @@ larger relative to another partition then that partition has more replicated
 entities.
 
 Given the values of the imbalance and shared entity count for each partition
-(RIB, graph) above, the content of the `[graph|rib].out` files, and
-Figures 6-7 below, **Answer Question 3**.
+(graph, RCB, RIB) above and the content of the `[graph|rcb|rib].out` files,
+**Answer Questions 3, 4, and 5**.
 
-*Figure 6. RIB partition*
-*Figure 7. ParMETIS multi-level graph partition*
+The partitioning descisions of RIB and RCB are based on the centroid of mesh
+elements while the multi-level graph partitioner is using mesh adjacency
+information (graph vertex = mesh element, graph edge = mesh face shared by
+two mesh elements).
+Based on this, and Figure 6, **Answer Question 6**.
+
+[<img src="figs/pmetis-rcb-rib.png" width="400">](figs/pmetis-rcb-rib.png)
+
+*Figure 6. Partitions created with multi-level graph (left), RCB (middle), and RIB (right)*
 
 ### Optional - Visualize the Partitioned Meshes
 Download the `*vtu` files from [Here]( https://goo.gl/forms/HmuX6HrT0Yfoz7ny2), or
@@ -243,23 +269,60 @@ to your local machine.
 
 ## Adaptive Simulation
 
-Describe physics
+This problem solves a linear elasticity model on a cantilever beam.
+Specifically, we approximate the weak form of 
+$$-\div(\sigma(u))=0$$ 
+where
+$$\sigma(u)=\lambda*\div(u)*I+\mu*(\nabla*u+u*\nabla)$$
+is the stress tensor corresponding
+to displacement field $u$, and $$\lambda = 1$$ and $$\mu = 1$$ are the material
+Lame constants.
 
-Describe code
+The boundary conditions are u = 0 on the left end of the model and a pull force
+f = 1.0 e-2 on the right end.
+The model ID of these boundary faces are provided as the input and by means of
+reverse classification the mesh faces classified on these model faces are
+detected and the BCs are applied.
+We want to perform a mesh adaptation on this example.
+We first solve on the initial mesh, then perform a mesh adaptation and then
+solves again on the new mesh.
+After solving the problem on the initial mesh, a Superconvergent Patch Recovery
+(SPR) error estimation is performed to get the size field based on which the
+adaptation is done.
+SPR basically computes a reference solution on the patch of elements based on
+the gradients of the solution fields at the element Gauss points and then
+compare the FE solution with it to measure the error at each element.
+This error is then scaled by a factor (adapt- ratio) which says what percentage
+of the error is acceptable and then a size field is generated.
+MeshAdapt takes this size field and generate a new mesh that respects this
+field.
 
-Describe adaptive strategy
+With the geometry in hand, we expect that the upper portion of the ring
+experiences higher stresses as the model is not symmetric and the lower part is
+much stiffer.
+Given this intuition we would expect higher error there and therefore a finer
+mesh is expected as the result of the meshAdapt.
+This can be seen comparing the initial mesh and the final mesh which is the
+outcome of the meshAdapt.
 
 ```
-qsub -I -n 1 -t 30 -A ATPESC2018 -q training
 cd ~/mfem-pumi-lesson/analysis
-mpirun -np 4 ./pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 5k1g_p4_parmetis/
+mpirun -np 4 .
+/pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 5k1g_p4_parmetis/
 mpirun -np 4 ./pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 5k1g_p4_rcb/
 mpirun -np 4 ./pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 5k1g_p4_rib/
 ```
 
-**Answer Question 4**
 
-**Answer Question 5**
+[<img src="figs/uprightMesh/initial.png" width="400">](figs/uprightMesh/initial.png)
+[<img src="figs/uprightMesh/final.png" width="400">](figs/uprightMesh/final.png)
+[<img src="figs/uprightMesh/initial.png" width="400">](figs/uprightMesh/initial.png)
+[<img src="figs/uprightMesh/final.png" width="400">](figs/uprightMesh/final.png)
+
+*Figure 6. Initial (left) and final (right) mesh (top) and displacement field
+(bottom).*
+
+**Answer Question 7**
 
 ## Out-Brief
 
@@ -279,6 +342,10 @@ Include links to other online sources you might want to include.
   * M. Zhou, T. Xie, S. Seol, M.S. Shephard, O. Sahni and K.E. Jansen, **Tools to Support Mesh Adaptation on Massively Parallel Computers**, Engineering with Computers, 28(3):287-301, 2012. DOI: 10.1007s00366-011-0218-x
   * M. Zhou, O. Sahni, M.S. Shephard, K.D. Devine and K.E. Jansen, **Controlling unstructured mesh partitions for massively parallel simulations**, SIAM J. Sci. Comp., 32(6):3201-3227, 2010. DOI: 10.1137090777323
   * M. Zhou, O. Sahni, H.J. Kim, C.A. Figueroa, C.A. Taylor, M.S. Shephard, and K.E. Jansen, **Cardiovascular Flow Simulation at Extreme Scale**, Computational Mechanics, 46:71-82, 2010. DOI: 10.1007s00466-009-0450-z
+
+* Partitioning
+  * Zoltan 
+  * ParMETIS multi-level graph
 
 * Mesh data and geometry interactions
   * Seol, E.S. and Shephard, M.S., **Efficient distributed mesh data structure for parallel automated adaptive analysis**, Engineering with Computers, 22(3-4):197-213, 2006, DOI: 10.1007s00366-006-0048-4
