@@ -12,7 +12,6 @@ header:
 
 ## My Questions
 
-- how do i create links from text to sections or figures?
 - how do i add emoji?  Tzanio had a star emoji https://www.webpagefx.com/tools/emoji-cheat-sheet/
 
 ## Todo
@@ -113,21 +112,35 @@ and defeatured geometric models.
 ### Optional - Run SimModeler to defeature the upright.
 Launch the VNC. Run SimModeler. FIXME
 
-## Problem Definition
+## Problem Definition {#probdef}
 
 We will define a tensile loading on the upright by applying a uniform force on
-one end (min Z face) and fixing the displacements on the other end (max Z face).
+one end (min Y face) and fixing the displacements on the other end (max Y face);
+as depicted in Figure 5.
 All other geometric model faces will be unconstrained.  No body forces are
 applied.
+
+[<img src="figs/upright_defeatured/boundaryConditions.png" width="400">](figs/upright_defeatured/boundaryConditions.png)
+
+*Figure 5. Boundary conditions*
 
 Using geometric classification of the mesh we can define the boundary conditions
 on the geometric model without having any knowledge/consideration of the mesh.
 Geometric classification defines the equal, or greater, order association of
 mesh entities to geometric model entities.
-For example, a mesh face can only be classified on a geometric model face or
-geometric model region, a mesh edge on geometric edges, faces and regions, 
+Specifically, a mesh region can only be classified on a geometric model region,
+a mesh face on a geometric face or region, and so on.
+Geometric classification is used throughout the set of unstructured mesh tools.
+For example, in mesh adaptation, classification (along with knowledge of the
+geometries parametric shape information) is critical for improving the meshes
+approximation to the geometric model when moving, adding, or removing mesh
+entities.
+Further reading on the use of classification is available in [Beall et al. 1999
+and Ibanez 2016](#refs).
+
 A very simple text based interface was defined for this demonstration example to
-define the two boundary conditions.  To specify the geometric model faces with
+define the two boundary conditions.
+  To specify the geometric model faces with
 the load applied we add one line with `Load` followed by another line with the
 number of faces with that load applied.  The geometric model face ids, one per
 line, are then listed. Using the same convention we define the fixed faces using
@@ -135,8 +148,6 @@ the string `Dirichlet`, the number of listed faces, then the list of face ids.
 The boundary condition specification for this example is listed below.
 Using the geometric model classification mechanism supports creation of more
 feature-rich interfaces (command line, file, GUI).
-
-Geometric classification 
 
 ```
 $ cat upright.def
@@ -155,10 +166,15 @@ Load
 
 Now that we have prepared the model and defined the boundary conditions we can
 proceed with mesh generation using the Simmetrix SimModSuite library APIs.
-The mesh generation procedures are driven by size controls (e.g., the absolute
-length of mesh edges) defined by the user on geometric model entities or defined
-within geometric primatives that intersect the model (e.g., cubes, spheres,
-cylinders, etc.).
+The mesh generation procedures are driven by size controls defined by the user
+on geometric model entities or defined within geometric primatives that
+intersect the model (e.g., cubes, spheres, cylinders, etc.).
+In this example we generate a coarse mesh using a single relative size control
+applied to the entire model.
+This control guides the generation procedures to create edges whose lengths are
+proportional, using our presribed value, to the length of local geometric model
+features.
+
 The mesh generator is automated, which in the domain of mesh generation means
 that it will always produce a valid mesh while doing its best to respect the
 user specified controls.
@@ -189,12 +205,12 @@ cd ~/mfem-pumi-lesson/meshGeneration
 [<img src="figs/upright/5kg1_all_zmax.png" width="400">](figs/upright/5kg1_all_zmax.png)
 [<img src="figs/upright/5kg1_all_zmin.png" width="400">](figs/upright/5kg1_all_zmin.png)
 
-*Figure 4. Mesh of initial upright model*
+*Figure 6. Mesh of initial upright model*
 
 [<img src="figs/upright_defeatured/5kg1_all_zmax.png" width="400">](figs/upright_defeatured/5kg1_all_zmax.png)
 [<img src="figs/upright_defeatured/5kg1_all_zmin.png" width="400">](figs/upright_defeatured/5kg1_all_zmin.png)
 
-*Figure 5. Mesh of defeatured upright model*
+*Figure 7. Mesh of defeatured upright model*
 
 ### Optional - Visualize the Initial Meshes
 Download the `.*vtu` files from [Here - FIXME](https://goo.gl/forms/HmuX6HrT0Yfoz7ny2), or
@@ -256,11 +272,11 @@ The partitioning descisions of RIB and RCB are based on the centroid of mesh
 elements while the multi-level graph partitioner is using mesh adjacency
 information (graph vertex = mesh element, graph edge = mesh face shared by
 two mesh elements).
-Based on this, and Figure 6, **Answer Question 6**.
+Based on this, and Figure 8, **Answer Question 6**.
 
 [<img src="figs/pmetis-rcb-rib.png" width="400">](figs/pmetis-rcb-rib.png)
 
-*Figure 6. Partitions created with multi-level graph (left), RCB (middle), and RIB (right)*
+*Figure 8. Partitions created with multi-level graph (left), RCB (middle), and RIB (right)*
 
 ### Optional - Visualize the Partitioned Meshes
 Download the `*vtu` files from [Here]( https://goo.gl/forms/HmuX6HrT0Yfoz7ny2), or
@@ -271,48 +287,46 @@ to your local machine.
 
 This problem solves a linear elasticity model on a cantilever beam.
 Specifically, we approximate the weak form of 
-$$-\div(\sigma(u))=0$$ 
+
+$$-div(\sigma(u))=0$$ 
+
 where
-$$\sigma(u)=\lambda*\div(u)*I+\mu*(\nabla*u+u*\nabla)$$
-is the stress tensor corresponding
-to displacement field $u$, and $$\lambda = 1$$ and $$\mu = 1$$ are the material
-Lame constants.
 
-The boundary conditions are u = 0 on the left end of the model and a pull force
-f = 1.0 e-2 on the right end.
-The model ID of these boundary faces are provided as the input and by means of
-reverse classification the mesh faces classified on these model faces are
-detected and the BCs are applied.
-We want to perform a mesh adaptation on this example.
-We first solve on the initial mesh, then perform a mesh adaptation and then
-solves again on the new mesh.
-After solving the problem on the initial mesh, a Superconvergent Patch Recovery
-(SPR) error estimation is performed to get the size field based on which the
-adaptation is done.
-SPR basically computes a reference solution on the patch of elements based on
-the gradients of the solution fields at the element Gauss points and then
-compare the FE solution with it to measure the error at each element.
-This error is then scaled by a factor (adapt- ratio) which says what percentage
-of the error is acceptable and then a size field is generated.
-MeshAdapt takes this size field and generate a new mesh that respects this
-field.
+$$\sigma(u)=\lambda*div(u)*I+\mu*(\nabla*u+u*\nabla)$$
 
-With the geometry in hand, we expect that the upper portion of the ring
-experiences higher stresses as the model is not symmetric and the lower part is
-much stiffer.
+is the stress tensor corresponding to displacement field $$u$$, 
+and $$\lambda=1$$ and $$\mu=1$$ are the material Lame constants.
+
+[Figure 5](#probdef) depicts the applied boundary conditions; a fixed displacement 
+$$u=0$$ on the max Y face and pull force $$f=1.0e-2$$ on the min Z face.
+The specification of these boundary conditions using geometric model entity 
+ids is described in the [Problem Definition](#probdef) section.
+
+To control the error without a-priori knowledge of solution we will run this
+example using mesh adaptation.
+The adaptive cycle:
+- solves the problem on an initial uniform coarse mesh,
+- estimates the discretization error,
+- defines an isotropic size field from the error estimate,
+- adapts the mesh using the size field, and
+- solves the problem on the adapted mesh.
+
+Multiple methods are available for error estimation (see the [Further Reading](#refs)
+section) and the subsequent size field computation.
+In this example a patch recovery approach is used.
+
+Given the structure of the geometric model and the specified boundary
+conditions, we expect that the upper portion (positive Z) of the main hub
+experiences higher stresses as the the lower part is much stiffer.
 Given this intuition we would expect higher error there and therefore a finer
 mesh is expected as the result of the meshAdapt.
-This can be seen comparing the initial mesh and the final mesh which is the
-outcome of the meshAdapt.
+
+Run the adaptive simulation:
 
 ```
 cd ~/mfem-pumi-lesson/analysis
-mpirun -np 4 .
-/pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 5k1g_p4_parmetis/
-mpirun -np 4 ./pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 5k1g_p4_rcb/
-mpirun -np 4 ./pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 5k1g_p4_rib/
+mpirun -np 2 pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.def -m 2p5k1g/
 ```
-
 
 [<img src="figs/uprightMesh/initial.png" width="400">](figs/uprightMesh/initial.png)
 [<img src="figs/uprightMesh/final.png" width="400">](figs/uprightMesh/final.png)
@@ -322,22 +336,15 @@ mpirun -np 4 ./pumi_upright_ex2p -p upright_defeatured_geomsim.smd -bf upright.d
 *Figure 6. Initial (left) and final (right) mesh (top) and displacement field
 (bottom).*
 
-**Answer Question 7**
+Look at Figure 6 and **Answer Question 7**.
 
 ## Out-Brief
 
-Here, re-emphasize the lesson objectives and key points.
-
-
-Its fine to go into greater detail about questions or objectives this lesson
-did not fully cover.
-
-### Further Reading
-
-Include links to other online sources you might want to include.
+### Further Reading {#refs}
 
 * SCOREC tools
   * C. W. Smith, M. Rasquin, D. Ibanez, K. E. Jansen, and M. S. Shephard **Improving Unstructured Mesh Partitions for Multiple Criteria Using Mesh Adjacencies**,  SIAM Journal on Scientific Computing, 2018. DOI: 10.1137/15M1027814
+  * D.A. Ibanez, E.S. Seol, C.W. Smith and M.S. Shephard, **PUMI: Parallel Unstructured Mesh Infrastructure**, ACM Transactions on Mathematical Software, 42(3): Article 17 (28 pages), 2016. DOI: 10.1145/2814935.
   * M. Zhou, O. Sahni, T. Xie, M.S. Shephard and K.E. Jansen, **Unstructured Mesh Partition Improvement for Implicit Finite Element at Extreme Scale**, Journal of Supercomputing, 59(3): 1218-1228, 2012. DOI 10.1007s11227-010-0521-0
   * M. Zhou, T. Xie, S. Seol, M.S. Shephard, O. Sahni and K.E. Jansen, **Tools to Support Mesh Adaptation on Massively Parallel Computers**, Engineering with Computers, 28(3):287-301, 2012. DOI: 10.1007s00366-011-0218-x
   * M. Zhou, O. Sahni, M.S. Shephard, K.D. Devine and K.E. Jansen, **Controlling unstructured mesh partitions for massively parallel simulations**, SIAM J. Sci. Comp., 32(6):3201-3227, 2010. DOI: 10.1137090777323
@@ -350,6 +357,7 @@ Include links to other online sources you might want to include.
 * Mesh data and geometry interactions
   * Seol, E.S. and Shephard, M.S., **Efficient distributed mesh data structure for parallel automated adaptive analysis**, Engineering with Computers, 22(3-4):197-213, 2006, DOI: 10.1007s00366-006-0048-4
   * Beall, M.W., Walsh, J. and Shephard, M.S, **A comparison of techniques for geometry access related to mesh generation**, Engineering with Computers, 20(3):210-221, 2004, DOI: 10.1007s00366-004-0289-z. 
+  * Beall, M.W.. and Shephard, M.S., **An Object-Oriented Framework for Reliable Numerical Simulations**, Engineering with Computers, 15(1):61-72, 1999, DOI: 10.1007/s003660050005.
   * Beall, M.W. and Shephard, M.S., **A general topology-based mesh data structure**, Int. J. Numer. Meth. Engng., 40(9):1573-1596, 1997, DOI: 10.1002(SICI)1097-0207(19970515)40:9<1573::AID-NME128>3.0.CO;2-9.
 
 * Adaptivity
